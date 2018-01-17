@@ -19,19 +19,82 @@ library(tidyverse)
 mental_health <- read_csv("../data/mental_health.csv")
 
 glimpse(mental_health)
-mental_health_reduced <- mental_health %>% filter(UNIT %in% c("Number of persons","Percent"), Ref_Date == 2012)
 
-mental_health_reduced %>% filter(GEO != "Canada")
+# Vector of Provinces to keep
+provinces <- mental_health_reduced$GEO %>% factor() %>% levels()
+provinces <- provinces[!provinces %in% c("Canada", "Atlantic Provinces", "Prairie Provinces")]
 
-glimpse(mental_health_reduced)
+# Vector of Ages to keep
+ages <- mental_health_reduced$AGE %>% factor() %>% levels()
+ages <- ages[c(1,2,4,5)]
+
+
+(mental_health_reduced <- mental_health %>% 
+  # Filter to only have Number of Persons and Percent, and only from year 2012
+  filter(UNIT %in% c("Number of persons","Percent"), Ref_Date == 2012) %>% 
+  # Filter to only have provinces 
+  filter(GEO %in% provinces) %>% 
+  filter(AGE %in% ages) %>% 
+  select(-c(Ref_Date, Vector, Coordinate)) %>% 
+  # Spread the Units - Number of Persons and Percent
+  spread(UNIT, Value))
+
 mental_health_reduced
-# Age Levels
-mental_health_reduced$AGE %>% factor() %>% levels()
-# 
-mental_health_reduced$HRPROF %>% factor() %>% levels()
-
-mental_health_reduced %>% filter(HRPROF == "Perceived mental health, fair or poor") %>% filter(UNIT == "Percent") %>% filter(AGE == "15 to 24 years")
+glimpse(mental_health_reduced)
+spread(mental_health_reduced, UNIT, Value)
 
 
 ```
 
+
+Ideas:
+- Render all of Canada shaded in different colours, checking either 1) Perceived Mental Health 2) Perceived Need for Mental Health 3) Self-Rated Stress
+- Within each Province Click - 
+  - Input Controls: 1) Gender 2) Age Included 3) Percentage vs. Count
+  - Render - Percentage Suicidal (as NUMBER)
+  - Render - Percentage Mental Health Services Accessed
+  - Render - Mood Disorders bar chart (maybe include others -- PTSD, Schizophrenia?)  
+  - Render - Substance Use bar Chart
+- For all can toggle PERCENTAGE vs. COUNT
+
+
+
+## From Class + Tutorials 
+
+Tutorial from 545: http://stat545.com/shiny00_index.html
+
+
+Go through the tutorials: https://shiny.rstudio.com/tutorial/  
+
+note: reactive vs. eventreactive -- if want to it update on click of a button do eventreactive
+
+in server.R -- can use renderUI to automatically generate checkboxes (her example, giving all the country names)
+
+plotOutput -- use the click argument or hover, etc. 
+
+
+
+Use this for colouring of Maps: http://colorbrewer2.org/#type=sequential&scheme=OrRd&n=4  
+
+## ggmaps:
+
+http://rforpublichealth.blogspot.ca/2015/10/mapping-with-ggplot-create-nice.html:
+
+http://unconj.ca/blog/choropleth-maps-with-r-and-ggplot2.html  
+
+
+## Leaflets Tutorial: 
+
+https://www.r-bloggers.com/4-tricks-for-working-with-r-leaflet-and-shiny
+---- "Code | Trick2 | Graph depends on click"  --  this will be really useful for SAVING what's highlighted as a reactive varaible for use in a graph
+
+
+Highlight Options -- https://rstudio.github.io/leaflet/shapes.html  (Can highlight a Province)  --- this is from hover, need to modify it so that it's on click.
+
+GREAT link for having reactive plots based on click of polygon: https://stackoverflow.com/questions/33575321/how-to-create-an-event-when-pressing-on-a-leaflet-popup-in-r
+
+## Shiny Dashboard
+
+https://rstudio.github.io/shinydashboard/get_started.html
+
+Look at example: https://github.com/rstudio/shiny-examples/tree/master/086-bus-dashboard
