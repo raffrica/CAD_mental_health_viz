@@ -1,0 +1,37 @@
+---
+title: "working_doc"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Working Doc
+
+Here is where is where I will have working notes and preliminary code.  
+
+As the project progresses, I will move the working code into dedicated scripts and delete the working notes (ex: planning, to-do's and resources) that have been implemented.  
+
+```{r}
+library(tidyverse)
+
+mental_health <- read_csv("../data/mental_health.csv")
+
+glimpse(mental_health)
+mental_health_reduced <- mental_health %>% filter(UNIT %in% c("Number of persons","Percent"), Ref_Date == 2012)
+
+mental_health_reduced %>% filter(GEO != "Canada")
+
+glimpse(mental_health_reduced)
+mental_health_reduced
+# Age Levels
+mental_health_reduced$AGE %>% factor() %>% levels()
+# 
+mental_health_reduced$HRPROF %>% factor() %>% levels()
+
+mental_health_reduced %>% filter(HRPROF == "Perceived mental health, fair or poor") %>% filter(UNIT == "Percent") %>% filter(AGE == "15 to 24 years")
+
+
+```
+
