@@ -34,17 +34,48 @@ ages <- ages[c(1,2,4,5)]
   filter(UNIT %in% c("Number of persons","Percent"), Ref_Date == 2012) %>% 
   # Filter to only have provinces 
   filter(GEO %in% provinces) %>% 
+  # Filter to only have unique ages (no overlap ranges)
   filter(AGE %in% ages) %>% 
+  # Filter to only have Male or Female (Both Sexes category is redundant) -- when there is missing Female, there is missing Both Sexes
+  filter(SEX %in% c("Males", "Females")) %>% 
+  # Select only variables that are actually being used later
   select(-c(Ref_Date, Vector, Coordinate)) %>% 
   # Spread the Units - Number of Persons and Percent
   spread(UNIT, Value))
 
-mental_health_reduced
-glimpse(mental_health_reduced)
-spread(mental_health_reduced, UNIT, Value)
+
+```
+
+
+```{r}
+mental_health_reduced$HRPROF %>% unique()
 
 
 ```
+
+
+```{r}
+
+# Self-Rated Stress
+mental_health_reduced %>% 
+  filter(HRPROF %in% grep("Self-rated",HRPROF,  value = TRUE)) %>% 
+  separate(col = HRPROF, into = c("Self-rated work stress", "level"), sep = ", ")
+
+# Perceived need for Mental Health Care
+mental_health_reduced %>% 
+  filter(HRPROF %in% grep("Perceived need", HRPROF,  value = TRUE)) %>% 
+  separate(col = HRPROF, into = c("Perceived need for mental health care", "level"), sep = ", ")
+
+# Perceived Mental Health State
+mental_health_reduced %>% 
+  filter(HRPROF %in% grep("Perceived mental", HRPROF,  value = TRUE)) %>% 
+  separate(col = HRPROF, into = c("Perceived mental health", "level"), sep = ", ")
+
+
+# Grepping multiple patterns - https://stackoverflow.com/questions/7597559/grep-using-a-character-vector-with-multiple-patterns
+
+```
+
 
 
 Ideas:
