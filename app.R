@@ -71,7 +71,7 @@ ui <- dashboardPage(
          tabPanel("Substance Use Disorders", plotOutput("substance_disorder_plot", height = "250px")),
          width = NULL)),
       column(width = 4,
-         box(title = "Suicide Rate", solidHeader = TRUE,  width = NULL),
+         valueBoxOutput("suicideBox",  width = NULL),
          box(title = "Accessed Care (past year)", solidHeader = TRUE, width = NULL))
       )
     )
@@ -83,13 +83,15 @@ server <- function(input, output){
   
   suicide_count <- reactive({
     # Filter Dataframe based on reactive inputs
-    mental_health_reduced %>% 
+    suicide_base <- mental_health_reduced %>% 
       filter(HRPROF == "Suicidal") %>% 
       filter(GEO == input$provincesInput) %>% 
       filter(UNIT == input$unitInput) %>% 
       filter(AGE == input$ageInput) %>% 
-      filter(SEX == input$sexInput) %>% 
-      
+      filter(SEX == input$sexInput)
+    
+    if (input$unitInput == "Number") suicide_base %>% filter(UNIT == input$unitInput) %>% .$Value
+    else suicide_base %>% filter(UNIT == input$unitInput) %>% .$Value %>% scales::percent()
     
   })
   
@@ -119,10 +121,10 @@ server <- function(input, output){
   output$general_disorder_plot <- renderPlot({
     p_disorders <- ggplot(data_gen()) +
       geom_bar(aes(x = HRPROF, y = Value), stat = "identity", 
-               fill = "light blue",
-               colour = "light blue") +
+               fill = "#3C8DBC",
+               colour = "#3C8DBC") +
       labs(y = input$unitInput, 
-           paste("Province:", input$provincesInput, "\n", 
+           title =paste("Province:", input$provincesInput, "\n", 
                  "Age:", input$ageInput, "\n", 
                  "Sex:", input$sexInput), 
            x = "Mental Health Disorders") +
@@ -139,8 +141,8 @@ server <- function(input, output){
   output$substance_disorder_plot <- renderPlot({
     p_disorders <- ggplot(data_subs()) +
       geom_bar(aes(x = HRPROF, y = Value), stat = "identity", 
-               fill = "light blue",
-               colour = "light blue") +
+               fill = "#3C8DBC",
+               colour = "#3C8DBC") +
       labs(y = input$unitInput, 
            title = paste("Province:", input$provincesInput, "\n", 
                          "Age:", input$ageInput, "\n", 
@@ -156,9 +158,17 @@ server <- function(input, output){
     
   })
   
+  output$suicideBox <- renderValueBox({
+    valueBox(
+      paste(suicide_count()), "Suicidal", icon = icon("list"), color = "light-blue"
+      )
+    
+    })
+  
   
   
   
   }
 
 shinyApp(ui,server)
+
