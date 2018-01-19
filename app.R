@@ -12,7 +12,7 @@ subset <- c("Alberta", "British Columbia", "Manitoba", "New Brunswick", "Newfoun
 canada <- subset(canada, PRENAME %in% subset)
 
 # Reading in Non-Mapping Data
-mental_health_reduced <- read_csv("data/mental_health.csv")
+mental_health_reduced <- read_csv("data/mh_clean.csv")
 ## FUTURE Buttons
 age_input  <- c("Total", "15 to 24", "25 to 44", "45 to 64", "65 +") 
 provinces_input <-c("British Columbia", "Alberta", "Saskatchewan", "Manitoba", "Ontario", 
@@ -50,7 +50,11 @@ ui <- dashboardPage(
     
     selectInput("unitInput", "Unit of Measurement",
                 choices = unit_input,
-                selected = unit_input[1])
+                selected = unit_input[1]), 
+    
+    selectInput("sexInput", "Sex",
+                choices = sex_input,
+                selected = sex_input[1])
     ),
   
   dashboardBody(
@@ -59,16 +63,16 @@ ui <- dashboardPage(
       addPolygons(data = canada, weight = 2), width = 12)),
     fluidRow(
       column(width = 8,
-       tabset(
+       tabBox(
          title = "Disorders",
          # The id lets us use input$tabset1 on the server to find the current tab
          id = "tabset1", height = "250px",
-         tabPanel("General Mental Health ", plotOutput("disorder_plot", height = "250px")),
-         tabPanel("Substance Abuse", plotOutput("disorder_plot", height = "250px")), 
+         tabPanel("General Mental Health Disorders", plotOutput("general_disorder_plot", height = "250px")),
+         tabPanel("Substance Use Disorders", plotOutput("substance_disorder_plot", height = "250px")),
          width = NULL)),
       column(width = 4,
-        box(title = "HI", width = NULL),
-        box(title = "HIHIH", width = NULL))
+         box(title = "Suicide Rate", solidHeader = TRUE,  width = NULL),
+         box(title = "Accessed Care (past year)", solidHeader = TRUE, width = NULL))
       )
     )
   
@@ -77,17 +81,50 @@ ui <- dashboardPage(
 
 server <- function(input, output){
   
-  output$disorder_plot <- renderPlot({
-    p_disorders <- ggplot(mental_health_reduced %>% 
-             filter(HRPROF %in% disorders_input[[1]]) %>% 
-             filter(GEO == input$provincesInput) %>% 
-             filter(UNIT == input$unitInput) %>% 
-             filter(AGE == input$ageInput)) +
+  suicide_count <- reactive({
+    # Filter Dataframe based on reactive inputs
+    mental_health_reduced %>% 
+      filter(HRPROF == "Suicidal") %>% 
+      filter(GEO == input$provincesInput) %>% 
+      filter(UNIT == input$unitInput) %>% 
+      filter(AGE == input$ageInput) %>% 
+      filter(SEX == input$sexInput) %>% 
+      
+    
+  })
+  
+  mental_health_reduced$HRPROF %>% unique()
+  data_gen <- reactive({
+    # Filter Dataframe based on reactive inputs - and for just general disorders
+    mental_health_reduced %>% 
+      filter(HRPROF %in% disorders_input[[1]]) %>% 
+      filter(GEO == input$provincesInput) %>% 
+      filter(UNIT == input$unitInput) %>% 
+      filter(AGE == input$ageInput) %>% 
+      filter(SEX == input$sexInput)
+    
+    })
+  
+  data_subs <- reactive({
+    # Filter Dataframe based on reactive inputs - and for just substance use disorders
+    mental_health_reduced %>% 
+      filter(HRPROF %in% disorders_input[[2]]) %>% 
+      filter(GEO == input$provincesInput) %>% 
+      filter(UNIT == input$unitInput) %>% 
+      filter(AGE == input$ageInput) %>% 
+      filter(SEX == input$sexInput)
+    
+  })
+  
+  output$general_disorder_plot <- renderPlot({
+    p_disorders <- ggplot(data_gen()) +
       geom_bar(aes(x = HRPROF, y = Value), stat = "identity", 
                fill = "light blue",
                colour = "light blue") +
-      labs(y = "Percent", 
-           title = paste("Province:", input$provincesInput, "\n", "Age:", input$ageInput), 
+      labs(y = input$unitInput, 
+           paste("Province:", input$provincesInput, "\n", 
+                 "Age:", input$ageInput, "\n", 
+                 "Sex:", input$sexInput), 
            x = "Mental Health Disorders") +
       scale_fill_discrete(drop = FALSE) +
       scale_x_discrete(drop = FALSE) +
@@ -97,8 +134,27 @@ server <- function(input, output){
     if (input$unitInput == "Number") p_disorders
     else p_disorders + scale_y_continuous(labels = scales::percent_format())
     
-    
     })
+  
+  output$substance_disorder_plot <- renderPlot({
+    p_disorders <- ggplot(data_subs()) +
+      geom_bar(aes(x = HRPROF, y = Value), stat = "identity", 
+               fill = "light blue",
+               colour = "light blue") +
+      labs(y = input$unitInput, 
+           title = paste("Province:", input$provincesInput, "\n", 
+                         "Age:", input$ageInput, "\n", 
+                         "Sex:", input$sexInput), 
+           x = "Mental Health Disorders") +
+      scale_fill_discrete(drop = FALSE) +
+      scale_x_discrete(drop = FALSE) +
+      theme_minimal()
+    
+    
+    if (input$unitInput == "Number") p_disorders
+    else p_disorders + scale_y_continuous(labels = scales::percent_format())
+    
+  })
   
   
   

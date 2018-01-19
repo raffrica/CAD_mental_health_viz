@@ -281,7 +281,13 @@ ggplot(mental_health_reduced %>%
   theme_minimal()
   
   
-unit_input
+mental_health_reduced %>% 
+         filter(HRPROF == "Suicidal") %>% 
+         filter(GEO == provinces_input[2]) %>% 
+         filter(UNIT == unit_input[2]) %>% 
+         filter(AGE == age_input[4]) %>% 
+        filter(SEX == "Both") %>% 
+  .$Value %>% scales::percent()
 ```
 
 
