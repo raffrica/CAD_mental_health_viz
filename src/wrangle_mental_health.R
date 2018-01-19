@@ -4,6 +4,7 @@ library(plyr)
 mental_health <- read_csv("data/mental_health.csv")
 
 glimpse(mental_health)
+mental_health$HRPROF %>% unique()
 
 # Vector of Provinces to keep
 provinces <- mental_health$GEO %>% factor() %>% levels()
@@ -57,7 +58,8 @@ substance_disorders_clean <- c("Any Substance", "Alcohol", "Cannabis", "Other")
              HRPROF %in% perceived_need |
              HRPROF %in% perceived_mental_health |
              HRPROF %in% general_disorders |
-             HRPROF %in% substance_disorders) %>% 
+             HRPROF %in% substance_disorders |
+             HRPROF == "Mental health services, professional consultation/service used, 12 months") %>% 
     
     # Change Variables so cleaner names
     mutate(HRPROF = mapvalues(HRPROF, stress_level, stress_level_clean)) %>% 
@@ -68,11 +70,15 @@ substance_disorders_clean <- c("Any Substance", "Alcohol", "Cannabis", "Other")
     mutate(SEX = mapvalues(SEX, c("Both sexes"), c("Both"))) %>% 
     mutate(UNIT = mapvalues(UNIT, c("Number of persons"), c("Number"))) %>% 
     mutate(AGE = mapvalues(AGE, ages, ages_clean)) %>% 
+    mutate(HRPROF = mapvalues(HRPROF, c("Mental health services, professional consultation/service used, 12 months"), 
+                              c("Accessed care (past year)"))) %>% 
     
     
     # Mutate values that are percent so that can be rendered effectively later  
     mutate(Value = ifelse(UNIT == "Percent", Value/100, Value))
   
 )
+
+mental_health_reduced$HRPROF %>% unique()
 
 write_csv(mental_health_reduced, path = "data/mh_clean.csv") 

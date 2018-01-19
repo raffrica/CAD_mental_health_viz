@@ -27,7 +27,7 @@ substance_disorders_clean <- c("Any Substance", "Alcohol", "Cannabis", "Other")
 general_disorders_clean <- c("Any Disorder", "Depression", "Bipolar", "Anxiety", "Suicidal", "Psychosis", "PTSD")
 disorders_input <- list(general_disorders_clean, substance_disorders_clean)
 
-
+mental_health_reduced$HRPROF %>% unique()
 
 ui <- dashboardPage(
   skin = "black",
@@ -72,7 +72,7 @@ ui <- dashboardPage(
          width = NULL)),
       column(width = 4,
          valueBoxOutput("suicideBox",  width = NULL),
-         box(title = "Accessed Care (past year)", solidHeader = TRUE, width = NULL))
+         valueBoxOutput("accessBox",  width = NULL)) #solidHeader = TRUE, width = NULL))
       )
     )
   
@@ -92,6 +92,20 @@ server <- function(input, output){
     
     if (input$unitInput == "Number") suicide_base %>% filter(UNIT == input$unitInput) %>% .$Value
     else suicide_base %>% filter(UNIT == input$unitInput) %>% .$Value %>% scales::percent()
+    
+  })
+  
+  accessed_care_count <- reactive({
+    # Filter Dataframe based on reactive inputs
+    access_base <- mental_health_reduced %>% 
+      filter(HRPROF == "Accessed care (past year)") %>% 
+      filter(GEO == input$provincesInput) %>% 
+      filter(UNIT == input$unitInput) %>% 
+      filter(AGE == input$ageInput) %>% 
+      filter(SEX == input$sexInput)
+    
+    if (input$unitInput == "Number") access_base %>% filter(UNIT == input$unitInput) %>% .$Value
+    else access_base %>% filter(UNIT == input$unitInput) %>% .$Value %>% scales::percent()
     
   })
   
@@ -164,6 +178,13 @@ server <- function(input, output){
       )
     
     })
+  
+  output$accessBox <- renderValueBox({
+    valueBox(
+      paste(accessed_care_count()), "Accessed Care (past year)", icon = icon("list"), color = "light-blue"
+    )
+    
+  })
   
   
   
