@@ -59,8 +59,7 @@ ui <- dashboardPage(
   
   dashboardBody(
     fluidRow(
-      box(leaflet() %>% addTiles() %>% 
-      addPolygons(data = canada, weight = 2), width = 12)),
+      box(leafletOutput("mymap"), width = NULL)),
     fluidRow(
       column(width = 8,
        tabBox(
@@ -109,9 +108,8 @@ server <- function(input, output){
     
   })
   
-  mental_health_reduced$HRPROF %>% unique()
+  # Filter Dataframe based on reactive inputs - and for just general disorders
   data_gen <- reactive({
-    # Filter Dataframe based on reactive inputs - and for just general disorders
     mental_health_reduced %>% 
       filter(HRPROF %in% disorders_input[[1]]) %>% 
       filter(GEO == input$provincesInput) %>% 
@@ -121,8 +119,8 @@ server <- function(input, output){
     
     })
   
+  # Filter Dataframe based on reactive inputs - and for just substance use disorders
   data_subs <- reactive({
-    # Filter Dataframe based on reactive inputs - and for just substance use disorders
     mental_health_reduced %>% 
       filter(HRPROF %in% disorders_input[[2]]) %>% 
       filter(GEO == input$provincesInput) %>% 
@@ -132,6 +130,7 @@ server <- function(input, output){
     
   })
   
+  # Output of Plot for General Mental Health Disorders
   output$general_disorder_plot <- renderPlot({
     p_disorders <- ggplot(data_gen()) +
       geom_bar(aes(x = HRPROF, y = Value), stat = "identity", 
@@ -152,6 +151,7 @@ server <- function(input, output){
     
     })
   
+  # Output of Plot for Substance Use Disorders
   output$substance_disorder_plot <- renderPlot({
     p_disorders <- ggplot(data_subs()) +
       geom_bar(aes(x = HRPROF, y = Value), stat = "identity", 
@@ -172,6 +172,7 @@ server <- function(input, output){
     
   })
   
+  # Output for Value Box containing the Rate of Suicidality 
   output$suicideBox <- renderValueBox({
     valueBox(
       paste(suicide_count()), "Suicidal", icon = icon("list"), color = "light-blue"
@@ -179,12 +180,49 @@ server <- function(input, output){
     
     })
   
+  # Output for Value Box containing value of those who accessed care
   output$accessBox <- renderValueBox({
     valueBox(
       paste(accessed_care_count()), "Accessed Care (past year)", icon = icon("list"), color = "light-blue"
     )
     
   })
+  
+  data_cloropleth <- reactive({
+    mh_data <- mental_health_reduced %>% 
+      filter(HRPROF == input$perceptionsInput) %>% 
+      filter(UNIT == input$unitInput) %>% 
+      filter(AGE == input$ageInput) %>% 
+      filter(SEX == input$sexInput) 
+    
+    merge(canada, mh_data, by.x = "PRENAME", by.y = "GEO")
+    
+    
+    })
+  
+  output$mymap <- renderLeaflet({
+    leaflet() %>% addTiles() %>% 
+      addPolygons(data = data_cloropleth(), 
+                  color = "#444444", 
+                  weight = 1, smoothFactor = 0.5,
+                  opacity = 1.0, fillOpacity = 0.5,
+                  fillColor = ~colorQuantile("YlOrRd", Value)(Value),
+                  highlightOptions = highlightOptions(color = "white", 
+                                                      weight = 2,
+                                                      bringToFront = TRUE)) %>% 
+      addLegend(position = "bottomright",pal = colorQuantile("YlOrRd", maybe$Value), value = maybe$Value) %>% 
+      addLabelOnlyMarkers(
+        lng= -100,
+        lat= 65,
+        label = paste(input$perceptionsInput),
+        labelOptions = labelOptions(noHide = TRUE, textOnly = FALSE, 
+                                    textsize = '20px', opacity = 0.8,
+                                    direction = "up")
+        )
+    
+    
+    })
+
   
   
   

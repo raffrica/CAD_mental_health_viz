@@ -247,62 +247,37 @@ library(rgdal)
 
 # Download Boundary files by: http://www12.statcan.gc.ca/census-recensement/2011/geo/bound-limit/bound-limit-2011-eng.cfm  
 getwd()
-canada_poly <- readOGR(dsn = ".", layer = "gpr_000a11a_e")
+canada <- readOGR(dsn = ".", layer = "gpr_000a11a_e")
 
 subset <- c("Alberta", "British Columbia", "Manitoba", "New Brunswick", "Newfoundland and Labrador", "Nova Scotia", "Ontario", "Prince Edward Island", "Quebec", "Saskatchewan")
 
 
-canada_poly <- subset(canada_poly, PRENAME %in% subset)
-canada$PRENAME
+canada <- subset(canada, PRENAME %in% subset)
+
 (mh_df<- mental_health_reduced %>% 
-  mutate(PRENAME = GEO) %>% 
-  dplyr::select(-GEO) %>% 
          filter(HRPROF == "Suicidal") %>% 
          filter(UNIT == unit_input[2]) %>% 
          filter(AGE == age_input[4]) %>% 
         filter(SEX == "Both"))
 mh_df <- mh_df %>% as.data.frame()
 
-row.names(mh_df)
 
-canada_df <- canada_poly %>% as.data.frame()
-
-canada_df <- canada_df %>% mutate(PRUID = revalue(PRUID, c("48" = "Alberta", 
-                                           "24" = "Quebec",
-                                           "12" = "Nova Scotia",
-                                           "13" = "New Brunswick", 
-                                           "46" = "Manitoba", 
-                                           "59" = "British Columbia", 
-                                           "11" = "Prince Edward Island",
-                                           "10" = "Newfoundland and Labrador",
-                                           "47" = "Saskatchewan",
-                                           "35" = "Ontario")))
-
-canada_complete <- SpatialPolygonsDataFrame(Sr = canada_poly, data = canada_df)
-                                           
-canada %>% dplyr::select(PRUID, PRENAME)
-
-getSpPPolygonsIDSlots(canada_complete)
-
-spdf_canada <- SpatialPolygonsDataFrame(Sr = canada_complete, data = mh_df)
-
-maybe <- merge(canada_complete, mh_df, by.x = "PRUID", by.y = "PRENAME")
+maybe <- merge(canada, mh_df, by.x = "PRENAME", by.y = "GEO")
 
 maybe@data
 
-canada_fort <- fortify(canada)
 
-test_pieces <- c(1:12)
+# Following this: http://rstudio.github.io/leaflet/choropleths.html
 
-canada_fort <- canada_fort %>% filter(id %in% test_pieces)
-
-pal <- colorQuantile("YlOrRd", maybe$Value) maybe$Value
-
-leaflet() %>% addTiles() %>% addPolygons(data = maybe, color = "#444444", weight = 1, smoothFactor = 0.5,
-    opacity = 1.0, fillOpacity = 0.5,
-    fillColor = ~pal,
-    highlightOptions = highlightOptions(color = "white", weight = 2,
-      bringToFront = TRUE)) %>% addLegend(position = "bottomright",pal = colorQuantile("YlOrRd", maybe$Value), value = maybe$Value)
+leaflet() %>% addTiles() %>% addPolygons(data = maybe, 
+                                         color = "#444444", 
+                                         weight = 1, smoothFactor = 0.5,
+                                         opacity = 1.0, fillOpacity = 0.5,
+                                         fillColor = ~colorQuantile("YlOrRd", maybe$Value)(maybe$Value),
+                                         highlightOptions = highlightOptions(color = "white", 
+                                                                             weight = 2,
+                                                                             bringToFront = TRUE)) %>% 
+  addLegend(position = "bottomright",pal = colorQuantile("YlOrRd", maybe$Value), value = maybe$Value)
 
 
 
