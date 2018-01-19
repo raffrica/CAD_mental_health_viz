@@ -15,18 +15,44 @@ As the project progresses, I will move the working code into dedicated scripts a
 
 ```{r}
 library(tidyverse)
+library(plyr)
 
 mental_health <- read_csv("../data/mental_health.csv")
 
 glimpse(mental_health)
 
 # Vector of Provinces to keep
-provinces <- mental_health_reduced$GEO %>% factor() %>% levels()
+provinces <- mental_health$GEO %>% factor() %>% levels()
 provinces <- provinces[!provinces %in% c("Canada", "Atlantic Provinces", "Prairie Provinces")]
 
 # Vector of Ages to keep
-ages <- mental_health_reduced$AGE %>% factor() %>% levels()
-ages <- ages[c(1,2,4,5)]
+ages <- mental_health$AGE %>% factor() %>% levels()
+ages <- ages[c(1,2,4,5, 6)]
+ages_clean <- c("Total", "15 to 24", "25 to 44", "45 to 64", "65 +")
+
+stress_level <- c("Self-rated work stress, days not at all or not very stressful", "Self-rated work stress, days quite a bit or extremely stressful")
+stress_level_clean <- c("Low Stress", "High Stress")
+
+perceived_need <- c("Perceived need for mental health care, need not met", 
+                    "Perceived need for mental health care, all needs met")
+perceived_need_clean <- c("Needs not Met", "Needs Met")
+
+
+perceived_mental_health <- c("Perceived mental health, fair or poor", "Perceived mental health, very good or excellent")
+perceived_mental_health_clean <- c("Poor Mental Health", "Good Mental Health")
+
+
+general_disorders <- c("Any mood disorder, life", "Major depressive episode, life" , 
+               "Bipolar disorder, life", "Generalized anxiety disorder, life",
+               "Suicidal thoughts, life", "Schizophrenia or psychosis, ever received diagnosis", "Post-traumatic stress disorder, current diagnosed condition")
+
+general_disorders_clean <- c("Any Disorder", "Depression", "Bipolar", "Anxiety", "Suicidal", "Psychosis", "PTSD")
+               
+substance_disorders  <- c("Any substance use disorder (alcohol or drug), life", 
+                          "Alcohol abuse or dependence, life" ,
+                          "Cannabis abuse or dependence, life", 
+                          "Other drug abuse or dependence (excluding cannabis), life")
+substance_disorders_clean <- c("Any Substance", "Alcohol", "Cannabis", "Other")
 
 
 (mental_health_reduced <- mental_health %>% 
@@ -36,41 +62,78 @@ ages <- ages[c(1,2,4,5)]
   filter(GEO %in% provinces) %>% 
   # Filter to only have unique ages (no overlap ranges)
   filter(AGE %in% ages) %>% 
-  # Filter to only have Male or Female (Both Sexes category is redundant) -- when there is missing Female, there is missing Both Sexes
-  filter(SEX %in% c("Males", "Females")) %>% 
+  # Change Units
+  mutate(Value = as.double(Value)) %>% 
   # Select only variables that are actually being used later
-  select(-c(Ref_Date, Vector, Coordinate)) %>% 
-  # Spread the Units - Number of Persons and Percent
-  spread(UNIT, Value))
+  dplyr::select(-c(Ref_Date, Vector, Coordinate)) %>% 
+  
+  # Filter HRPROF (i.e. variables) by category
+  filter(HRPROF %in% stress_level |
+           HRPROF %in% perceived_need |
+           HRPROF %in% perceived_mental_health |
+           HRPROF %in% general_disorders |
+           HRPROF %in% substance_disorders) %>% 
+  
+  # Change Variables so cleaner names
+  mutate(HRPROF = mapvalues(HRPROF, stress_level, stress_level_clean)) %>% 
+  mutate(HRPROF = mapvalues(HRPROF, perceived_need, perceived_need_clean)) %>% 
+  mutate(HRPROF = mapvalues(HRPROF, perceived_mental_health, perceived_mental_health_clean)) %>% 
+  mutate(HRPROF = mapvalues(HRPROF, general_disorders, general_disorders_clean)) %>% 
+  mutate(HRPROF = mapvalues(HRPROF, substance_disorders, substance_disorders_clean)) %>% 
+  mutate(SEX = mapvalues(SEX, c("Both sexes"), c("Both"))) %>% 
+  mutate(UNIT = mapvalues(UNIT, c("Number of persons"), c("Number"))) %>% 
+  mutate(AGE = mapvalues(AGE, ages, ages_clean)) %>% 
+    
+  
+  # Mutate values that are percent so that can be rendered effectively later  
+  mutate(Value = ifelse(UNIT == "Percent", Value/100, Value))
+  
+  )
 
+
+age_input
+
+ages
+ages_clean
+
+## FUTURE Buttons
+
+age_input  <- mental_health_reduced$AGE %>% unique()
+provinces_input <- provinces
+sex_input <- mental_health_reduced$SEX %>% unique()
+unit_input <- mental_health_reduced$UNIT %>% unique()
+
+stress_level_clean <- c("Low Stress", "High Stress")
+perceived_need_clean <- c("Needs not Met", "Needs Met")
+perceived_mental_health_clean <- c("Poor Mental Health", "Good Mental Health")
+
+perceptions_input <- list(stress_level_clean, perceived_need_clean, perceived_mental_health_clean)
+
+
+substance_disorders_clean <- c("Any Substance", "Alcohol", "Cannabis", "Other")
+general_disorders_clean <- c("Any Disorder", "Depression", "Bipolar", "Anxiety", "Suicidal", "Psychosis", "PTSD")
+
+disorders_input <- list(general_disorders_clean, substance_disorders_clean)
+
+mental_health_reduced
 
 ```
 
 
-```{r}
-mental_health_reduced$HRPROF %>% unique()
-
-
-```
-
 
 ```{r}
-
-# Self-Rated Stress
-mental_health_reduced %>% 
-  filter(HRPROF %in% grep("Self-rated",HRPROF,  value = TRUE)) %>% 
-  separate(col = HRPROF, into = c("Self-rated work stress", "level"), sep = ", ")
-
-# Perceived need for Mental Health Care
-mental_health_reduced %>% 
-  filter(HRPROF %in% grep("Perceived need", HRPROF,  value = TRUE)) %>% 
-  separate(col = HRPROF, into = c("Perceived need for mental health care", "level"), sep = ", ")
 
 # Perceived Mental Health State
 mental_health_reduced %>% 
   filter(HRPROF %in% grep("Perceived mental", HRPROF,  value = TRUE)) %>% 
   separate(col = HRPROF, into = c("Perceived mental health", "level"), sep = ", ")
 
+# Perceived Mental Health GOOD
+mental_health_reduced %>% 
+  filter(HRPROF == "Perceived mental health, good" |
+           HRPROF == "Perceived mental health, very good or excellent") %>% 
+  group_by(GEO, AGE, SEX) %>% 
+  mutate(n_persons = mean(`Number of persons`))
 
 # Grepping multiple patterns - https://stackoverflow.com/questions/7597559/grep-using-a-character-vector-with-multiple-patterns
 
@@ -122,6 +185,8 @@ https://www.r-bloggers.com/4-tricks-for-working-with-r-leaflet-and-shiny
 
 Highlight Options -- https://rstudio.github.io/leaflet/shapes.html  (Can highlight a Province)  --- this is from hover, need to modify it so that it's on click.
 
+https://www.r-graph-gallery.com/183-choropleth-map-with-leaflet/  
+
 GREAT link for having reactive plots based on click of polygon: https://stackoverflow.com/questions/33575321/how-to-create-an-event-when-pressing-on-a-leaflet-popup-in-r
 
 ## Shiny Dashboard
@@ -129,3 +194,95 @@ GREAT link for having reactive plots based on click of polygon: https://stackove
 https://rstudio.github.io/shinydashboard/get_started.html
 
 Look at example: https://github.com/rstudio/shiny-examples/tree/master/086-bus-dashboard
+
+
+## Playing around with leaflet
+```{r}
+
+library(rgeos)
+library(raster)
+
+canada <- getData('GADM', country = "CAN", level = 1)
+#%>% gSimplify(0.001)
+#subset <- c("Alberta", "British Columbia", "Manitoba", "New Brunswick", "Newfoundland and Labrador", "Nova Scotia", "Ontario", "Prince Edward Island", "Québec", "Saskatchewan")
+
+#canada <- subset(canada, NAME_1 %in% subset)
+
+
+#getSmallPolys <- function(poly, minarea=0.01) {
+  # Get the areas
+  areas <- lapply(poly@polygons, 
+                  function(x) sapply(x@Polygons, function(y) y@area))
+
+  # Quick summary of the areas
+  print(quantile(unlist(areas)))
+
+  # Which are the big polygons?
+  bigpolys <- lapply(areas, function(x) which(x > minarea))
+  length(unlist(bigpolys))
+
+  # Get only the big polygons and extract them
+  for(i in 1:length(bigpolys)){
+    if(length(bigpolys[[i]]) >= 1 && bigpolys[[i]] >= 1){
+      poly@polygons[[i]]@Polygons <- poly@polygons[[i]]@Polygons[bigpolys[[i]]]
+      poly@polygons[[i]]@plotOrder <- 1:length(poly@polygons[[i]]@Polygons)
+    }
+  }
+  return(poly)
+#}
+
+#canada <- getSmallPolys(canada)
+
+leaflet() %>% addTiles() %>% addPolygons(data = canada, weight = 2)
+```
+
+
+```{r}
+library(rgeos)
+library(maptools)
+library(ggmap)
+library(rgdal)
+
+# Download Boundary files by: http://www12.statcan.gc.ca/census-recensement/2011/geo/bound-limit/bound-limit-2011-eng.cfm  
+getwd()
+canada <- readOGR(dsn = ".", layer = "gpr_000a11a_e")
+
+subset <- c("Alberta", "British Columbia", "Manitoba", "New Brunswick", "Newfoundland and Labrador", "Nova Scotia", "Ontario", "Prince Edward Island", "Quebec", "Saskatchewan")
+
+
+canada <- subset(canada, PRENAME %in% subset)
+canada$PRENAME
+
+```
+
+## Just do it in ggmap and be done with it.. 
+
+http://rforpublichealth.blogspot.ca/2015/10/mapping-with-ggplot-create-nice.html  
+
+
+
+
+```{r}
+
+ggplot(mental_health_reduced %>% 
+         filter(HRPROF %in% disorders_input[[1]]) %>% 
+         filter(GEO == provinces_input[2]) %>% 
+         filter(UNIT == unit_input[2]) %>% 
+         filter(AGE == age_input[4])) +
+  geom_bar(aes(x = HRPROF, y = Value), stat = "identity", 
+           fill = "light blue",
+           colour = "light blue") +
+  labs(y = "Percent", 
+       title = paste("Province:", provinces_input[2], "\n", "Age:", age_input[4]), 
+       x = "Mental Health Disorders") +
+  scale_fill_discrete(drop = FALSE) +
+  scale_x_discrete(drop = FALSE) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  theme_minimal()
+  
+  
+unit_input
+```
+
+
+
