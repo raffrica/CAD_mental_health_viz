@@ -44,10 +44,6 @@ ui <- dashboardPage(
                 choices = age_input,
                 selected = age_input[1]), 
     
-    selectInput("provincesInput", "Province",
-                choices = provinces_input,
-                selected = provinces_input[1]), 
-    
     selectInput("unitInput", "Unit of Measurement",
                 choices = unit_input,
                 selected = unit_input[2]), 
