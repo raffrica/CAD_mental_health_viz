@@ -81,6 +81,7 @@ ui <- dashboardPage(
 )
 
 server <- function(input, output){
+
   
   suicide_count <- reactive({
     # Filter Dataframe based on reactive inputs
@@ -114,7 +115,7 @@ server <- function(input, output){
   data_gen <- reactive({
     mental_health_reduced %>% 
       filter(HRPROF %in% disorders_input[[1]]) %>% 
-      filter(GEO == input$provincesInput) %>% 
+      filter(GEO == province_clicked$prov_clicked_now) %>% 
       filter(UNIT == input$unitInput) %>% 
       filter(AGE == input$ageInput) %>% 
       filter(SEX == input$sexInput)
@@ -125,7 +126,7 @@ server <- function(input, output){
   data_subs <- reactive({
     mental_health_reduced %>% 
       filter(HRPROF %in% disorders_input[[2]]) %>% 
-      filter(GEO == input$provincesInput) %>% 
+      filter(GEO == province_clicked$prov_clicked_now) %>% 
       filter(UNIT == input$unitInput) %>% 
       filter(AGE == input$ageInput) %>% 
       filter(SEX == input$sexInput)
@@ -139,7 +140,7 @@ server <- function(input, output){
                fill = "#3C8DBC",
                colour = "#3C8DBC") +
       labs(y = input$unitInput, 
-           title =paste("Province:", input$provincesInput, "\n", 
+           title =paste("Province:", province_clicked$prov_clicked_now, "\n", 
                  "Age:", input$ageInput, "\n", 
                  "Sex:", input$sexInput), 
            x = "Mental Health Disorders") +
@@ -160,7 +161,7 @@ server <- function(input, output){
                fill = "#3C8DBC",
                colour = "#3C8DBC") +
       labs(y = input$unitInput, 
-           title = paste("Province:", input$provincesInput, "\n", 
+           title = paste("Province:", province_clicked$prov_clicked_now, "\n", 
                          "Age:", input$ageInput, "\n", 
                          "Sex:", input$sexInput), 
            x = "Mental Health Disorders") +
@@ -177,10 +178,19 @@ server <- function(input, output){
   # Output for Value Box containing the Rate of Suicidality 
   output$suicideBox <- renderValueBox({
     valueBox(
-      paste(suicide_count()), "Suicidal", icon = icon("list"), color = "light-blue"
+      paste(province_clicked$prov_clicked_now), "Suicidal", icon = icon("list"), color = "light-blue"
       )
     
     })
+  
+  # # Output for Value Box containing the Rate of Suicidality 
+  # output$suicideBox <- renderValueBox({
+  #   valueBox(
+  #     paste(suicide_count()), "Suicidal", icon = icon("list"), color = "light-blue"
+  #   )
+  #   
+  # })
+  
   
   # Output for Value Box containing value of those who accessed care
   output$accessBox <- renderValueBox({
@@ -211,7 +221,8 @@ server <- function(input, output){
                   fillColor = ~colorQuantile("YlOrRd", Value)(Value),
                   highlightOptions = highlightOptions(color = "white", 
                                                       weight = 2,
-                                                      bringToFront = TRUE)) %>% 
+                                                      bringToFront = TRUE),
+                  layerId = ~PRENAME) %>% 
       addLegend(position = "bottomright",pal = colorQuantile("YlOrRd", maybe$Value), value = maybe$Value) %>% 
       addLabelOnlyMarkers(
         lng= -100,
@@ -227,10 +238,18 @@ server <- function(input, output){
   
   
   output$title_figures <- renderText({
-    paste("Province:", input$provincesInput)
+    paste("Province:", province_clicked$prov_clicked_now)
     
     })
+  
 
+  province_clicked <- reactiveValues(prov_clicked_now = "British Columbia")
+  
+  observeEvent(input$mymap_shape_click, {
+    province_clicked$prov_clicked_now <- input$mymap_shape_click$id
+    
+  })
+  
   
   
   
