@@ -33,7 +33,7 @@ ui <- dashboardPage(
   skin = "black",
   
   dashboardHeader(
-    title = "Mental Health Info"),
+    title = "Canadian Mental Health: The 2012 Canadian Community Health Survey Visualized", titleWidth = 750),
   
   dashboardSidebar(
     selectInput("perceptionsInput", "Canadian Perceptions",
@@ -83,7 +83,7 @@ server <- function(input, output){
     # Filter Dataframe based on reactive inputs
     suicide_base <- mental_health_reduced %>% 
       filter(HRPROF == "Suicidal") %>% 
-      filter(GEO == input$provincesInput) %>% 
+      filter(GEO == province_clicked$prov_clicked_now) %>% 
       filter(UNIT == input$unitInput) %>% 
       filter(AGE == input$ageInput) %>% 
       filter(SEX == input$sexInput)
@@ -97,7 +97,7 @@ server <- function(input, output){
     # Filter Dataframe based on reactive inputs
     access_base <- mental_health_reduced %>% 
       filter(HRPROF == "Accessed care (past year)") %>% 
-      filter(GEO == input$provincesInput) %>% 
+      filter(GEO == province_clicked$prov_clicked_now) %>% 
       filter(UNIT == input$unitInput) %>% 
       filter(AGE == input$ageInput) %>% 
       filter(SEX == input$sexInput)
