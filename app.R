@@ -7,7 +7,7 @@ library(rgdal)
 
 # Reading in Data
 getwd()
-canada <- readOGR("src","gpr_000a11a_e")
+canada <- readOGR("data","gpr_000a11a_e")
 subset <- c("Alberta", "British Columbia", "Manitoba", "New Brunswick", "Newfoundland and Labrador", "Nova Scotia", "Ontario", "Prince Edward Island", "Quebec", "Saskatchewan")
 canada <- subset(canada, PRENAME %in% subset)
 
@@ -50,7 +50,7 @@ ui <- dashboardPage(
     
     selectInput("unitInput", "Unit of Measurement",
                 choices = unit_input,
-                selected = unit_input[1]), 
+                selected = unit_input[2]), 
     
     selectInput("sexInput", "Sex",
                 choices = sex_input,
@@ -61,7 +61,7 @@ ui <- dashboardPage(
     fluidRow(
       box(leafletOutput("mymap"), width = 12), width = NULL),
     
-    fluidRow(box(title = textOutput("title_figures"), width = 12), width = NULL),
+    fluidRow(box(title = textOutput("title_figures"), width = 12, solidHeader = TRUE, background = "light-blue"), width = NULL),
     fluidRow(
       column(width = 8,
        tabBox(
@@ -175,21 +175,13 @@ server <- function(input, output){
     
   })
   
-  # Output for Value Box containing the Rate of Suicidality 
+  # Output for Value Box containing the Rate of Suicidality
   output$suicideBox <- renderValueBox({
     valueBox(
-      paste(province_clicked$prov_clicked_now), "Suicidal", icon = icon("list"), color = "light-blue"
-      )
-    
-    })
-  
-  # # Output for Value Box containing the Rate of Suicidality 
-  # output$suicideBox <- renderValueBox({
-  #   valueBox(
-  #     paste(suicide_count()), "Suicidal", icon = icon("list"), color = "light-blue"
-  #   )
-  #   
-  # })
+      paste(suicide_count()), "Suicidal", icon = icon("list"), color = "light-blue"
+    )
+
+  })
   
   
   # Output for Value Box containing value of those who accessed care
@@ -213,8 +205,10 @@ server <- function(input, output){
     })
   
   output$mymap <- renderLeaflet({
+    data_map <- data_cloropleth()
+    
     leaflet() %>% addTiles() %>% 
-      addPolygons(data = data_cloropleth(), 
+      addPolygons(data = data_map, 
                   color = "#444444", 
                   weight = 1, smoothFactor = 0.5,
                   opacity = 1.0, fillOpacity = 0.5,
@@ -223,7 +217,7 @@ server <- function(input, output){
                                                       weight = 2,
                                                       bringToFront = TRUE),
                   layerId = ~PRENAME) %>% 
-      addLegend(position = "bottomright",pal = colorQuantile("YlOrRd", maybe$Value), value = maybe$Value) %>% 
+      addLegend(position = "bottomright",pal = colorQuantile("YlOrRd", data_map$Value), value = data_map$Value) %>% 
       addLabelOnlyMarkers(
         lng= -100,
         lat= 65,
