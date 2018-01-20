@@ -255,7 +255,7 @@ subset <- c("Alberta", "British Columbia", "Manitoba", "New Brunswick", "Newfoun
 canada <- subset(canada, PRENAME %in% subset)
 
 (mh_df<- mental_health_reduced %>% 
-         filter(HRPROF == "Suicidal") %>% 
+         filter(HRPROF == "Good Mental Health") %>% 
          filter(UNIT == unit_input[2]) %>% 
          filter(AGE == age_input[4]) %>% 
         filter(SEX == "Both"))
