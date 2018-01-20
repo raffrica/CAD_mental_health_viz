@@ -59,7 +59,9 @@ ui <- dashboardPage(
   
   dashboardBody(
     fluidRow(
-      box(leafletOutput("mymap"), width = NULL)),
+      box(leafletOutput("mymap"), width = 12), width = NULL),
+    
+    fluidRow(box(title = textOutput("title_figures"), width = 12), width = NULL),
     fluidRow(
       column(width = 8,
        tabBox(
@@ -220,6 +222,12 @@ server <- function(input, output){
                                     direction = "up")
         )
     
+    
+    })
+  
+  
+  output$title_figures <- renderText({
+    paste("Province:", input$provincesInput)
     
     })
 
