@@ -3,6 +3,7 @@ library(tidyverse)
 library(shinydashboard)
 library(leaflet)
 library(rgdal)
+library(plotly)
 
 
 # Reading in Data
@@ -124,7 +125,7 @@ server <- function(input, output){
   })
   
   # Output of Plot for General Mental Health Disorders
-  output$general_disorder_plot <- renderPlot({
+  output$general_disorder_plot <- renderPlotly({
     p_disorders <- ggplot(data_gen()) +
       geom_bar(aes(x = HRPROF, y = Value), stat = "identity", 
                fill = "#3C8DBC",
@@ -138,10 +139,11 @@ server <- function(input, output){
       scale_x_discrete(drop = FALSE) +
       theme_minimal()+
       theme(axis.text=element_text(size=12),
-                    axis.title=element_text(size=14,face="bold"))
+                    axis.title=element_text(size=14,face="bold")) +
+      scale_y_continuous(labels = scales::percent_format())
     
-    
-    p_disorders + scale_y_continuous(labels = scales::percent_format())
+    pl <- plotly_build(p_disorders)
+    pl
     
     })
   
@@ -209,7 +211,8 @@ server <- function(input, output){
                                                       weight = 2,
                                                       bringToFront = TRUE),
                   layerId = ~PRENAME) %>% 
-      addLegend(position = "bottomright",pal = colorQuantile("YlOrRd", data_map$Value), value = data_map$Value) %>% 
+      addLegend(position = "bottomright",pal = colorQuantile("YlOrRd", data_map$Value), value = data_map$Value,
+                title = paste("Percentiles for", input$perceptionsInput)) %>% 
       addLabelOnlyMarkers(
         lng= -100,
         lat= 65,
