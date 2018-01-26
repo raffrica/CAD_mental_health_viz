@@ -43,9 +43,10 @@ ui <- dashboardPage(
                 choices = age_input,
                 selected = age_input[1]), 
     
-    selectInput("sexInput", "Sex",
+    radioButtons("sexInput", "Sex",
                 choices = sex_input,
-                selected = sex_input[1])
+                selected = sex_input[1], 
+                inline = TRUE)
     ),
   
   dashboardBody(
