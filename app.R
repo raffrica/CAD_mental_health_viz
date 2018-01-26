@@ -19,9 +19,9 @@ provinces_input <-c("British Columbia", "Alberta", "Saskatchewan", "Manitoba", "
                      "Quebec", "New Brunswick", "Prince Edward Island", "Nova Scotia", "Newfoundland and Labrador")
 sex_input <- mental_health_reduced$SEX %>% unique()
 unit_input <- mental_health_reduced$UNIT %>% unique() %>% .[2]
-stress_level_clean <- c("Low Stress", "High Stress")
-perceived_need_clean <- c("Needs not Met", "Needs Met")
-perceived_mental_health_clean <- c("Poor Mental Health", "Good Mental Health")
+stress_level_clean <- c("Low Stress", "High Stress") %>% .[2]
+perceived_need_clean <- c("Needs not Met", "Needs Met") %>% .[2]
+perceived_mental_health_clean <- c("Poor Mental Health", "Good Mental Health") %>% .[1]
 perceptions_input <- c(stress_level_clean, perceived_need_clean, perceived_mental_health_clean)
 substance_disorders_clean <- c("Any Substance", "Alcohol", "Cannabis", "Other")
 general_disorders_clean <- c("Any Disorder", "Depression", "Bipolar", "Anxiety", "Suicidal", "Psychosis", "PTSD")
