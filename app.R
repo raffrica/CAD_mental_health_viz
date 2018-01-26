@@ -18,7 +18,7 @@ age_input  <- c("Total", "15 to 24", "25 to 44", "45 to 64", "65 +")
 provinces_input <-c("British Columbia", "Alberta", "Saskatchewan", "Manitoba", "Ontario", 
                      "Quebec", "New Brunswick", "Prince Edward Island", "Nova Scotia", "Newfoundland and Labrador")
 sex_input <- mental_health_reduced$SEX %>% unique()
-unit_input <- mental_health_reduced$UNIT %>% unique()
+unit_input <- mental_health_reduced$UNIT %>% unique() %>% .[2]
 stress_level_clean <- c("Low Stress", "High Stress")
 perceived_need_clean <- c("Needs not Met", "Needs Met")
 perceived_mental_health_clean <- c("Poor Mental Health", "Good Mental Health")
@@ -27,7 +27,6 @@ substance_disorders_clean <- c("Any Substance", "Alcohol", "Cannabis", "Other")
 general_disorders_clean <- c("Any Disorder", "Depression", "Bipolar", "Anxiety", "Suicidal", "Psychosis", "PTSD")
 disorders_input <- list(general_disorders_clean, substance_disorders_clean)
 
-mental_health_reduced$HRPROF %>% unique()
 
 ui <- dashboardPage(
   skin = "black",
@@ -43,10 +42,6 @@ ui <- dashboardPage(
     selectInput("ageInput", "Age",
                 choices = age_input,
                 selected = age_input[1]), 
-    
-    selectInput("unitInput", "Unit of Measurement",
-                choices = unit_input,
-                selected = unit_input[2]), 
     
     selectInput("sexInput", "Sex",
                 choices = sex_input,
@@ -84,12 +79,11 @@ server <- function(input, output){
     suicide_base <- mental_health_reduced %>% 
       filter(HRPROF == "Suicidal") %>% 
       filter(GEO == province_clicked$prov_clicked_now) %>% 
-      filter(UNIT == input$unitInput) %>% 
+      filter(UNIT == unit_input) %>% 
       filter(AGE == input$ageInput) %>% 
       filter(SEX == input$sexInput)
     
-    if (input$unitInput == "Number") suicide_base %>% filter(UNIT == input$unitInput) %>% .$Value
-    else suicide_base %>% filter(UNIT == input$unitInput) %>% .$Value %>% scales::percent()
+    suicide_base %>% filter(UNIT == unit_input) %>% .$Value %>% scales::percent()
     
   })
   
@@ -98,12 +92,11 @@ server <- function(input, output){
     access_base <- mental_health_reduced %>% 
       filter(HRPROF == "Accessed care (past year)") %>% 
       filter(GEO == province_clicked$prov_clicked_now) %>% 
-      filter(UNIT == input$unitInput) %>% 
+      filter(UNIT == unit_input) %>% 
       filter(AGE == input$ageInput) %>% 
       filter(SEX == input$sexInput)
     
-    if (input$unitInput == "Number") access_base %>% filter(UNIT == input$unitInput) %>% .$Value
-    else access_base %>% filter(UNIT == input$unitInput) %>% .$Value %>% scales::percent()
+    access_base %>% filter(UNIT == unit_input) %>% .$Value %>% scales::percent()
     
   })
   
@@ -112,7 +105,7 @@ server <- function(input, output){
     mental_health_reduced %>% 
       filter(HRPROF %in% disorders_input[[1]]) %>% 
       filter(GEO == province_clicked$prov_clicked_now) %>% 
-      filter(UNIT == input$unitInput) %>% 
+      filter(UNIT == unit_input) %>% 
       filter(AGE == input$ageInput) %>% 
       filter(SEX == input$sexInput)
     
@@ -123,7 +116,7 @@ server <- function(input, output){
     mental_health_reduced %>% 
       filter(HRPROF %in% disorders_input[[2]]) %>% 
       filter(GEO == province_clicked$prov_clicked_now) %>% 
-      filter(UNIT == input$unitInput) %>% 
+      filter(UNIT == unit_input) %>% 
       filter(AGE == input$ageInput) %>% 
       filter(SEX == input$sexInput)
     
@@ -135,7 +128,7 @@ server <- function(input, output){
       geom_bar(aes(x = HRPROF, y = Value), stat = "identity", 
                fill = "#3C8DBC",
                colour = "#3C8DBC") +
-      labs(y = input$unitInput, 
+      labs(y = unit_input, 
            title =paste("Province:", province_clicked$prov_clicked_now, "\n", 
                  "Age:", input$ageInput, "\n", 
                  "Sex:", input$sexInput), 
@@ -145,8 +138,7 @@ server <- function(input, output){
       theme_minimal()
     
     
-    if (input$unitInput == "Number") p_disorders
-    else p_disorders + scale_y_continuous(labels = scales::percent_format())
+    p_disorders + scale_y_continuous(labels = scales::percent_format())
     
     })
   
@@ -156,7 +148,7 @@ server <- function(input, output){
       geom_bar(aes(x = HRPROF, y = Value), stat = "identity", 
                fill = "#3C8DBC",
                colour = "#3C8DBC") +
-      labs(y = input$unitInput, 
+      labs(y = unit_input, 
            title = paste("Province:", province_clicked$prov_clicked_now, "\n", 
                          "Age:", input$ageInput, "\n", 
                          "Sex:", input$sexInput), 
@@ -166,8 +158,7 @@ server <- function(input, output){
       theme_minimal()
     
     
-    if (input$unitInput == "Number") p_disorders
-    else p_disorders + scale_y_continuous(labels = scales::percent_format())
+    p_disorders + scale_y_continuous(labels = scales::percent_format())
     
   })
   
@@ -191,7 +182,7 @@ server <- function(input, output){
   data_cloropleth <- reactive({
     mh_data <- mental_health_reduced %>% 
       filter(HRPROF == input$perceptionsInput) %>% 
-      filter(UNIT == input$unitInput) %>% 
+      filter(UNIT == unit_input) %>% 
       filter(AGE == input$ageInput) %>% 
       filter(SEX == input$sexInput) 
     
