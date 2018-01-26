@@ -125,7 +125,7 @@ server <- function(input, output){
   })
   
   # Output of Plot for General Mental Health Disorders
-  output$general_disorder_plot <- renderPlotly({
+  output$general_disorder_plot <- renderPlot({
     p_disorders <- ggplot(data_gen()) +
       geom_bar(aes(x = HRPROF, y = Value), stat = "identity", 
                fill = "#3C8DBC",
@@ -141,9 +141,7 @@ server <- function(input, output){
       theme(axis.text=element_text(size=12),
                     axis.title=element_text(size=14,face="bold")) +
       scale_y_continuous(labels = scales::percent_format())
-    
-    pl <- plotly_build(p_disorders)
-    pl
+    p_disorders
     
     })
   
