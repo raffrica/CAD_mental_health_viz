@@ -136,7 +136,9 @@ server <- function(input, output){
            x = "Mental Health Disorders") +
       scale_fill_discrete(drop = FALSE) +
       scale_x_discrete(drop = FALSE) +
-      theme_minimal()
+      theme_minimal()+
+      theme(axis.text=element_text(size=12),
+                    axis.title=element_text(size=14,face="bold"))
     
     
     p_disorders + scale_y_continuous(labels = scales::percent_format())
@@ -156,7 +158,9 @@ server <- function(input, output){
            x = "Mental Health Disorders") +
       scale_fill_discrete(drop = FALSE) +
       scale_x_discrete(drop = FALSE) +
-      theme_minimal()
+      theme_minimal()+
+      theme(axis.text=element_text(size=12),
+            axis.title=element_text(size=14,face="bold"))
     
     
     p_disorders + scale_y_continuous(labels = scales::percent_format())
