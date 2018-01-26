@@ -36,6 +36,9 @@ ui <- dashboardPage(
     title = "Canadian Mental Health: The 2012 Canadian Community Health Survey Visualized", titleWidth = 750),
   
   dashboardSidebar(
+    helpText(a("Original Dataset", href= "http://open.canada.ca/data/en/dataset/bb9cc768-e2d5-4e1c-87dc-4ab6a38196b9")),
+    p("Percentages are projections using 2006 Population Census data, and indicate the expected prevalence in the population"),
+    p("For more details on the sampling technique and study design:", a("Click Here", href= "http://www23.statcan.gc.ca/imdb/p2SV.pl?Function=getSurvey&SDDS=5015")),
     selectInput("perceptionsInput", "Canadian Perceptions",
                 choices = perceptions_input,
                 selected = perceptions_input[1]),
